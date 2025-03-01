@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>ThreatAnalyzer AI - Upload</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+  <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet" />
+  <style>
+    .upload-container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      padding: 3rem 0;
+      margin-left: 13%;
+      margin-right: 13%;
+    }
+
+    .card-upload {
+      border: none;
+      border-radius: 20px;
+      background: white;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      transition: transform .3s ease;
+    
+    }
+
+    .card-upload:hover {
+      transform: translateY(-5px);
+    }
+
+    .upload-area {
+      padding: 4rem 2rem;
+      text-align: center;
+      cursor: pointer;
+      position: relative;
+      background: linear-gradient(60deg, #def5ea, #ffffff, #def5ea);
+      border-radius: 20px;
+      margin: 1.5rem;
+      transition: all 0.3s ease;
+      width: 80%;
+      justify-self: center;
+    }
+
+    .upload-area:hover {
+      background: linear-gradient(60deg, #ffffff, #def5ea, #ffffff);
+      box-shadow: 0 5px 20px rgba(13, 110, 253, 0.1);
+
+    }
+
+    .upload-area.dragover {
+      background: rgba(13, 110, 253, 0.05);
+      border: 2px dashed var(--secondary-color);
+    }
+
+    .file-input {
+      opacity: 0;
+      position: absolute;
+      width: 80%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      cursor: pointer;
+    }
+
+
+    .results-container {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+      width: 100%;
+      /* Reduced width to bring it inside */
+      max-width: 74%;
+      /* Optional for better responsiveness */
+      padding: 2rem 2rem;
+      /* Added padding */
+      margin: 0 auto;
+      /* Center the container */
+    }
+
+    .results-container.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .analysis-card {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      padding: 3rem;
+      margin: 3rem 0.5rem;
+      /* Move the card further inside */
+    }
+
+
+    .risk-select {
+      border-radius: 8px;
+      padding: 0.8rem 1.5rem;
+      font-weight: 600;
+      width: 50%;
+      transition: all 0.3s ease;
+      background-color: #ffffff;
+    }
+
+    .tactic-badge {
+      background: rgba(13, 110, 253, 0.1);
+      color: var(--dark-color);
+      border-radius: 8px;
+      padding: 0.6rem 1.2rem;
+      margin: 0.5rem 0.5rem 0.5rem 0;
+      display: inline-flex;
+      align-items: center;
+      transition: all 0.2s ease;
+    }
+
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.95);
+      display: none;
+      place-items: center;
+      z-index: 1000;
+      backdrop-filter: blur(5px);
+    }
+
+    .upload-preview {
+      background: rgba(13, 110, 253, 0.05);
+      border-radius: 12px;
+      padding: 1rem;
+      margin-top: 1rem;
+      animation: fadeIn 0.5s ease;
+    }
+
+    .resize-text-editor {
+      border-radius: 5px;
+      height: 300px;
+      resize: none;
+    }
+
+    .fixed-textarea {
+      resize: none;
+      height: 150px;
+      width: 100%;
+    }
+
+    .save-btn-container {
+      display: flex;
+      justify-content: center;
+      margin-top: 2rem;
+    }
+
+    .save-btn-container .btn {
+      padding: 1rem 2rem;
+      color: white;
+      border-radius: 25px;
+    }
+
+    /* White hamburger icon for mobile */
+
+    .navbar-toggler-icon {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3E%3Cpath stroke='white' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3E%3C/svg%3E");
+    }
+
+    @media (max-width: 768px) {
+      .analysis-card {
+        padding: 1.5rem;
+        margin: 1rem 0;
+        border-radius: 15px;
+      }
+
+      .result-section {
+
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .upload-area {
+        padding: 3rem 1rem;
+        margin: 1rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-lg">
+    <div class="container">
+      <a class="navbar-brand" href="{{ url_for('home') }}">
+        <i class="fas fa-shield-alt"></i> ThreatAnalyzer AI
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+        aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <!-- All Navigation Elements Together to the Right -->
+        <ul class="navbar-nav ms-auto align-items-center">
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('home') }}">Home</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('threats') }}">Threats</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('about') }}">About</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('team') }}">Team</a>
+          </li>
+          <!-- Authentication Group -->
+          <li class="nav-item">
+            {% if session.username %}
+            <div class="auth-group">
+              <span>{{ session.username }}</span>
+              <a class="logout-btn" href="{{ url_for('logout') }}">Logout</a>
+            </div>
+            {% else %}
+            <a class="log-in" href="{{ url_for('login') }}">Login</a>
+            {% endif %}
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Upload Section -->
+  <div class="upload-container">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-lg-12">
+          <div class="card-upload py-10 align-self-center">
+            <div class="upload-area position-relative">
+              <input type="file" id="fileInput" class="file-input" accept=".pdf" required />
+              <div class="upload-content">
+                <div class="mb-3">
+                  <i class="fas fa-file-upload fa-3x" style="color: var(--secondary-color)"></i>
+                </div>
+                <h3 class="mb-3" style="color: var(--dark-color)">
+                  Upload Threat Report
+                </h3>
+                <p class="text-muted">
+                  Drag & drop or click to browse PDF files
+                </p>
+                <div id="filePreview" class="upload-preview"></div>
+              </div>
+              <div class="file-remove" id="fileRemove" style="display: none"></div>
+            </div>
+
+            <div class="px-4 pb-4" style="justify-self: center !important">
+              <button class="btn btn-primary btn-lg" id="analyzeBtn" style="
+                    padding: 1rem;
+                    background-color: var(--secondary-color);
+                    border-radius: 30px;
+                    border: none;
+                  ">
+                <i class="fas fa-analytics me-2"></i> Analyze Document
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loading">
+    <div class="spinner-border text-primary spinner" style="width: 4rem; height: 4rem" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+  </div>
+
+  <!-- Results Section -->
+  <div class="results-container" id="resultsContainer">
+    <div class="analysis-card">
+      <h2 class="mb-4 text-center" style="color: var(--secondary-color)">
+        <i class="fas fa-file-chart-line me-2"></i>Threat Analysis Report
+      </h2>
+      <div id="resultsContent" class="d-grid gap-3"></div>
+
+      <!-- Navigation Buttons -->
+      <div class="d-flex justify-content-between mt-4">
+        <button class="btn btn-outline-dark btn-lg" id="prevAttack">
+          <i class="fas fa-chevron-left me-2"></i>Previous
+        </button>
+        <span id="pageIndicator" class="align-self-center">Page 1 of 1</span>
+        <button class="btn btn-outline-dark btn-lg" id="nextAttack">
+          Next<i class="fas fa-chevron-right ms-2"></i>
+        </button>
+      </div>
+
+      <!-- Save Analysis Button -->
+      <div class="save-btn-container">
+        <button class="btn btn-lg" style="background-color: var(--secondary-color); border-radius: 50px;" id="saveChanges">
+          <i class="fas fa-save me-2"></i>Save Analysis
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="bg-dark py-4">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-6">
+          <h5>Contact Us</h5>
+          <p>Email: security@threatanalyzer.ai</p>
+        </div>
+        <div class="col-md-6 text-md-end text-center">
+          <p>&copy; 2023 ThreatAnalyzer AI<br />All rights reserved.</p>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    let attacks = [];
+    let currentIndex = 0;
+
+    // File Upload Handling
+    const fileInput = document.getElementById("fileInput");
+    const uploadArea = document.querySelector(".upload-area");
+    const analyzeBtn = document.getElementById("analyzeBtn");
+    const filePreview = document.getElementById("filePreview");
+    const fileRemove = document.getElementById("fileRemove");
+
+    fileInput.addEventListener("change", function (e) {
+      const file = e.target.files[0];
+      if (file) {
+        uploadArea.classList.add("dragover");
+        filePreview.innerHTML = `
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <i class="fas fa-file-pdf me-2"></i>
+              <strong>${file.name}</strong>
+              <span class="text-muted ms-2">(${(
+            file.size /
+            1024 /
+            1024
+          ).toFixed(2)}MB)</span>
+            </div>
+            <i class="fas fa-check-circle text-success"></i>
+          </div>
+        `;
+        fileRemove.style.display = "block";
+        setTimeout(() => uploadArea.classList.remove("dragover"), 1000);
+      }
+    });
+
+    // Remove file handler
+    fileRemove.addEventListener("click", function () {
+      fileInput.value = "";
+      filePreview.innerHTML = "";
+      fileRemove.style.display = "none";
+    });
+
+    // Drag and Drop Handling
+    uploadArea.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      uploadArea.classList.add("dragover");
+    });
+
+    uploadArea.addEventListener("dragleave", () => {
+      uploadArea.classList.remove("dragover");
+    });
+
+    uploadArea.addEventListener("drop", (e) => {
+      e.preventDefault();
+      uploadArea.classList.remove("dragover");
+      fileInput.files = e.dataTransfer.files;
+      fileInput.dispatchEvent(new Event("change"));
+    });
+
+    // Form Submission
+    analyzeBtn.addEventListener("click", function (e) {
+      e.preventDefault();
+      if (!fileInput.files.length) return alert("Please select a PDF file");
+
+      const formData = new FormData();
+      formData.append("file", fileInput.files[0]);
+
+      const loading = document.getElementById("loading");
+      loading.style.display = "grid";
+
+      fetch('{{ url_for("upload") }}', {
+        method: "POST",
+        body: formData,
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          loading.style.display = "none";
+          if (data.error) return alert("Error: " + data.error);
+
+          attacks = Array.isArray(data.data) ? data.data : [data.data];
+          currentIndex = 0;
+          displayAttack(currentIndex);
+
+          const resultsContainer =
+            document.getElementById("resultsContainer");
+          resultsContainer.classList.add("visible");
+          window.scrollTo({
+            top: resultsContainer.offsetTop - 80,
+            behavior: "smooth",
+          });
+        })
+        .catch((error) => {
+          loading.style.display = "none";
+          alert("Analysis failed. Please try again.");
+        });
+    });
+
+    // Display Attack Function
+    function displayAttack(index) {
+      const attack = attacks[index];
+      if (!attack) return;
+      document.getElementById("pageIndicator").innerText = `Page ${index + 1
+        } of ${attacks.length}`;
+      const riskClass = `risk-${attack["Risk Factor"].toLowerCase()}`;
+
+      document.getElementById("resultsContent").innerHTML = `
+        <div class="result-section">
+          <h3 class="d-flex align-items-center gap-2 mb-3">
+            
+            <input type="text" class="form-control border-1 bg-transparent p-0 fs-3 fw-bold" 
+                   value="${attack.Title || "Untitled Analysis"}">
+          </h3>
+        </div>
+
+        <div class="result-section">
+          <h5><i class="fas fa-align-left me-2"></i>Detailed Description</h5>
+          <textarea class="form-control fixed-textarea">${attack["Detailed Description"] || ""
+        }</textarea>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-md-12 col-sm-6 col-lg-4">
+            <div class="result-section h-100">
+              <h5><i class="fas fa-bug me-2"></i>Attack Type</h5>
+              <input type="text" class="form-control" value="${attack.Attack_type || "Unknown"
+        }">
+            </div>
+          </div>
+          
+          <div class="col-md-12 col-sm-6 col-lg-4">
+            <div class="result-section h-100">
+              <h5><i class="fas fa-exclamation-triangle me-2"></i>Risk Factor</h5>
+              <select class="risk-select w-80">
+                <option value="Critical" ${attack["Risk Factor"] === "Critical" ? "selected" : ""
+        }>Critical</option>
+                <option value="High" ${attack["Risk Factor"] === "High" ? "selected" : ""
+        }>High</option>
+                <option value="Medium" ${attack["Risk Factor"] === "Medium" ? "selected" : ""
+        }>Medium</option>
+                <option value="Low" ${attack["Risk Factor"] === "Low" ? "selected" : ""
+        }>Low</option>
+              </select>
+            </div>
+          </div>
+        <div class="col-md-12 col-sm-6 col-lg-4">
+        <div class="result-section h-100">
+          <h5><i class="fas fa-calendar-day me-2"></i>Date</h5>
+          <input type="date" class="form-control" value="${attack.Date || new Date().toISOString().split("T")[0]
+        }" readonly>
+        </div>          
+        </div>
+
+        </div>
+
+        <div class="result-section">
+          <h5><i class="fas fa-chess-board me-2"></i>Tactics</h5>
+          <div class="d-flex flex-wrap">
+            ${(attack.Tactics || [])
+          .map(
+            (t) => `
+              <div class="tactic-badge">
+                <i class="fas fa-tag me-2"></i>
+                ${t.name} <span class="text-muted ms-2">#${t.id || "N/A"}</span>
+              </div>
+            `
+          )
+          .join("") ||
+        '<div class="text-muted">No tactics identified</div>'
+        }
+          </div>
+        </div>
+
+        <div class="result-section">
+          <h5><i class="fas fa-microscope me-2"></i>Techniques</h5>
+          <div class="d-flex flex-wrap gap-2">
+            ${(attack.Techniques || [])
+          .map(
+            (t) => `
+              <div class="tactic-badge">
+                <i class="fas fa-code me-2"></i>
+                ${t.name} <span class="text-muted ms-2">#${t.id || "N/A"}</span>
+              </div>
+            `
+          )
+          .join("") ||
+        '<div class="text-muted">No techniques detected</div>'
+        }
+          </div>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="result-section h-100">
+              <h5><i class="fas fa-key me-2"></i>Key Points</h5>
+              <textarea class="form-control resize-text-editor" rows="3">${(
+          attack["Key Points"] || ["No key points"]
+        ).join("\n")}</textarea>
+            </div>
+          </div>
+          
+          <div class="col-md-6">
+            <div class="result-section h-100">
+              <h5><i class="fas fa-shield-alt me-2"></i>Mitigations</h5>
+              <textarea class="form-control resize-text-editor" rows="3">${(
+          attack["Mitigations"] || ["No mitigations"]
+        ).join("\n")}</textarea>
+            </div>
+          </div>
+        </div>
+
+        
+      `;
+
+      // Update navigation buttons state
+      document.getElementById("prevAttack").disabled = index === 0;
+      document.getElementById("nextAttack").disabled =
+        index === attacks.length - 1;
+    }
+
+    // Update the current attack in the global array
+    function updateCurrentAttack() {
+      const resultsContent = document.getElementById("resultsContent");
+
+      const updatedAttack = {
+        Title: resultsContent.querySelector('input[type="text"]').value,
+        "Detailed Description":
+          resultsContent.querySelector("textarea").value,
+        Attack_type:
+          resultsContent.querySelectorAll('input[type="text"]')[1].value,
+        "Risk Factor": resultsContent.querySelector("select").value,
+        "Key Points": resultsContent
+          .querySelectorAll("textarea")[1]
+          .value.split("\n"),
+        Mitigations: resultsContent
+          .querySelectorAll("textarea")[2]
+          .value.split("\n"),
+        Date: resultsContent.querySelector('input[type="date"]').value,
+        Tactics: attacks[currentIndex].Tactics || [],
+        Techniques: attacks[currentIndex].Techniques || [],
+      };
+
+      attacks[currentIndex] = updatedAttack;
+    }
+
+    // Previous button click handler
+    document
+      .getElementById("prevAttack")
+      .addEventListener("click", function () {
+        if (currentIndex > 0) {
+          updateCurrentAttack();
+          currentIndex--;
+          displayAttack(currentIndex);
+        }
+      });
+
+    // Next button click handler
+    document
+      .getElementById("nextAttack")
+      .addEventListener("click", function () {
+        if (currentIndex < attacks.length - 1) {
+          updateCurrentAttack();
+          currentIndex++;
+          displayAttack(currentIndex);
+        }
+      });
+
+    // Save Changes: Update current attack and send the entire attacks array to the backend
+    document
+      .getElementById("saveChanges")
+      .addEventListener("click", function () {
+        updateCurrentAttack();
+
+        fetch('{{ url_for("save_analysis") }}', {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(attacks),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.error) {
+              alert("Error: " + data.error);
+            } else {
+              alert("All data saved successfully!");
+              location.reload();
+            }
+          })
+          .catch((error) => {
+            console.error("Error saving data:", error);
+          });
+      });
+
+
+
+    fileInput.addEventListener("change", function (e) {
+      const file = e.target.files[0];
+      if (file) {
+        uploadArea.classList.add("dragover");
+        filePreview.innerHTML = `
+      <div class="d-flex align-items-center justify-content-between">
+        <div>
+          <i class="fas fa-file-pdf me-2"></i>
+          <strong>${file.name}</strong>
+          <span class="text-muted ms-2">(${(
+            file.size / 1024 / 1024
+          ).toFixed(2)}MB)</span>
+        </div>
+        <div>
+          <i class="fas fa-check-circle text-success me-2"></i>
+          <i id="closeIcon" class="fas fa-times-circle text-danger" style="cursor: pointer;"></i>
+        </div>
+      </div>
+    `;
+        fileRemove.style.display = "block";
+        setTimeout(() => uploadArea.classList.remove("dragover"), 1000);
+
+        // Close icon handler
+        document.getElementById("closeIcon").addEventListener("click", clearFilePreview);
+      }
+    });
+
+    // Remove file handler (analyze button close)
+    fileRemove.addEventListener("click", clearFilePreview);
+
+    function clearFilePreview() {
+      fileInput.value = "";
+      filePreview.innerHTML = "";
+      fileRemove.style.display = "none";
+    }
+
+  </script>
+</body>
+
+</html>

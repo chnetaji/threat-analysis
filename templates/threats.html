@@ -1,0 +1,435 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>ThreatAnalyzer AI - Threats</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&amp;display=swap" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet" />
+
+    <style>
+        main{
+            background-color: #fafbfb;
+        }
+
+        .reset{
+            background-color: var(--dark-color) !important;
+        }
+
+        .g-3 {
+            justify-content: space-evenly;
+        }
+
+        .modal-body{
+            background-color: #f4f4f4;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+    </style>
+</head>
+
+<body>
+    <!-- Redirect if user is not logged in -->
+    {% if not session.username %}
+    <script>
+        window.location.href = "{{ url_for('login') }}";
+    </script>
+    {% endif %}
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+        <a class="navbar-brand" href="{{ url_for('home') }}">
+            <i class="fas fa-shield-alt"></i> ThreatAnalyzer AI
+        </a>
+        <button
+            class="navbar-toggler"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#navbarNav"
+            aria-controls="navbarNav"
+            aria-expanded="false"
+            aria-label="Toggle navigation"
+        >
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <!-- All Navigation Elements Together to the Right -->
+            <ul class="navbar-nav ms-auto align-items-center">
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('home') }}">Home</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('about') }}">About</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('team') }}">Team</a>
+            </li>
+            {% if session.role == 'admin' %}
+                <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('upload') }}">Upload</a>
+                </li>
+            {% endif %}
+            <!-- Authentication Group -->
+            <li class="nav-item">
+                {% if session.username %}
+                <div class="auth-group">
+                    <span>{{ session.username }}</span>
+                    <a class="logout-btn" href="{{ url_for('logout') }}">Logout</a>
+                </div>
+                {% else %}
+                <a class="log-in" href="{{ url_for('login') }}">Login</a>
+                {% endif %}
+            </li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="py-5">
+        <div class="container">
+            <h2 class="mb-4" style="color: var(--secondary-color);">Threat Database</h2>
+    
+            <!-- Search Input with Date Sort Dropdown -->
+            <div class="row mb-4 g-3 align-items-center">
+                <div class="col-md-10">
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="searchInput" placeholder="Search threats..." />
+                        <button class="btn btn-outline-secondary" type="button" id="searchButton">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+                <!-- Sorting Dropdown -->
+                <div class="col-md-2">
+                    <select class="form-select" id="sortOrder">
+                        <option value="desc" {% if sort_order == 'desc' %}selected{% endif %}>New to Old</option>
+                        <option value="asc" {% if sort_order == 'asc' %}selected{% endif %}>Old to New</option>
+                    </select>
+                </div>
+
+            </div>
+
+
+
+            <!-- Filters -->
+            <div class="row mb-4 g-2 align-items-center justify-content-between">
+                <!-- Tactic Filter -->
+                <div class="col-md-2">
+                    <select class="form-select w-100" id="tacticFilter">
+                        <option value="">All Tactics</option>
+                        {% for tactic in all_tactics %}
+                            <option value="{{ tactic }}" {% if selected_tactic == tactic %}selected{% endif %}>{{ tactic }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Technique Filter (Adjusted Width) -->
+                <div class="col-md-2">
+                    <select class="form-select w-100" id="techniqueFilter">
+                        <option value="">All Techniques</option>
+                        {% for technique in all_techniques %}
+                            <option value="{{ technique }}" {% if selected_technique == technique %}selected{% endif %}>
+                                {{ technique }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+
+                <!-- Risk Factor Filter -->
+                <div class="col-md-2">
+                    <select class="form-select w-100" id="risk_factor">
+                        <option value="">Risk Factor (All)</option>
+                        {% for risk in all_risks %}
+                            <option value="{{ risk }}" {% if selected_risk == risk %}selected{% endif %}>Risk Factor ({{ risk|capitalize }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Year Filter -->
+                <div class="col-md-2">
+                    <select class="form-select w-100" id="yearFilter">
+                        <option value="">All Years</option>
+                        {% for year in all_years %}
+                            <option value="{{ year }}" {% if selected_year == year %}selected{% endif %}>{{ year }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Filter Controls (Small Buttons) -->
+                <div class="col-md-2">
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-custom btn-sm flex-grow-1" id="applyFilters" type="button">
+                            Apply
+                        </button>
+                        <button class="btn btn-custom reset btn-sm flex-grow-1" id="resetFilters" type="button">
+                            Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+
+    
+            <!-- Threat Cards -->
+            {% if threats %}
+                <div class="row g-4">
+                    {% for threat in threats %}
+                    <div class="col-md-4">
+                        <div class="card h-100 d-flex flex-column">
+                            <div class="card-body d-flex flex-column">
+                                <div class="d-flex justify-content-between mb-3">
+                                    {% set risk_classes = {
+                                        'Critical': 'bg-black text-white',
+                                        'High': 'bg-danger',
+                                        'Medium': 'bg-warning',
+                                        'Low': 'bg-success'
+                                    } %}
+                                    
+                                    {% if threat["Risk Factor"] in risk_classes %}
+                                        <span class="threat-tag {{ risk_classes[threat['Risk Factor']] }}">
+                                            {{ threat["Risk Factor"] }}
+                                        </span>
+                                    {% endif %}                                        
+                                    <span class="text-muted">
+                                        {{ threat["Date"] }}
+                                    </span>
+                                </div>
+                                <h5 class="card-title" style="color: var(--secondary-color); margin: 0.2rem">
+                                    {{ threat["Title"] }}
+                                </h5>
+                                <p class="card-text flex-grow-1" style="text-align: justify; margin: 0.2rem">
+                                    {{ threat["Detailed Description"][:200] + "..." }}
+                                </p>
+                                <div class="mt-auto">
+                                    <button class="btn btn-sm btn-custom w-100 view-details" data-bs-toggle="modal"
+                                        data-bs-target="#threatModal" data-title="{{ threat['Title'] }}"
+                                        data-date="{{ threat['Date'] }}"
+                                        data-description="{{ threat['Detailed Description'] }}"
+                                        data-attack-type="{{ threat['Attack_type'] }}"
+                                        data-risk-factor="{{ threat['Risk Factor'] }}"
+                                        data-mitigations='{{ threat["Mitigations"] | tojson | safe }}'
+                                        data-key-points='{{ threat["Key Points"] | tojson | safe }}'
+                                        data-techniques='{{ threat["Techniques"] | tojson | safe }}'
+                                        data-tactics='{{ threat["Tactics"] | tojson | safe }}'>
+                                        View Details
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+    
+            <!-- Pagination Controls -->
+            <nav aria-label="Threats Pagination">
+                <ul class="pagination justify-content-center mt-5" style="gap: 12px;">
+                    <!-- Previous Button -->
+                    {% if current_page > 1 %}
+                    <li class="page-item">
+                        <a class="page-link border-0 shadow-sm px-4 py-2 rounded-pill" 
+                        style="background-color: var(--primary-color); color: white; font-weight: bold; font-size: 16px;"
+                        href="{{ url_for('threats', page=current_page-1) }}">Previous</a>
+                    </li>
+                    {% endif %}
+
+                    <!-- Page Numbers -->
+                    {% for i in range(1, total_pages + 1) %}
+                    <li class="page-item {% if i == current_page %}active{% endif %}">
+                        <a class="page-link border shadow-sm mx-2 px-4 py-2 rounded-pill" 
+                        style="{% if i == current_page %}background-color: #18bc9c; color: white; font-weight: bold;{% else %}color: #18bc9c; border: 2px solid #18bc9c;{% endif %} font-size: 16px;"
+                        href="{{ url_for('threats', page=i) }}">{{ i }}</a>
+                    </li>
+                    {% endfor %}
+
+                    <!-- Next Button -->
+                    {% if current_page < total_pages %}
+                    <li class="page-item">
+                        <a class="page-link border-0 shadow-sm px-4 py-2 rounded-pill" 
+                        style="background-color: #18bc9c; color: white; font-weight: bold; font-size: 16px;"
+                        href="{{ url_for('threats', page=current_page+1) }}">Next</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% else %}
+                <p class="text-center text-muted">No threats found.</p>
+            {% endif %}
+    </main>
+    
+
+    <!-- Modal -->
+    <div class="modal fade" id="threatModal" tabindex="-1" aria-labelledby="threatModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content" style="border-radius: 8px; overflow: hidden;">
+                <div class="modal-header" style="background-color: var(--dark-color); color: white; padding: 15px;">
+                    <h5 class="modal-title" id="threatModalLabel"></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
+                        style="filter: invert(1);"></button>
+                </div>
+                <div class="modal-body" style="padding: 20px;">
+
+                    <!-- Top  -->
+                    <div
+                        style="background: #ffffff; padding: 15px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                        <p id="modal-description" style="font-size: 16px; font-weight: 500; margin-bottom: 0;"></p>
+                    </div>
+
+                    <div class="row mt-3"
+                        style="background-color: #e9ecef; padding: 15px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+
+
+                        <!-- Right Column -->
+                        <div class="col-md-6">
+                            <p><strong>Date:</strong> <span id="modal-date"></span></p>
+                            <p><strong>Attack Type:</strong> <span id="modal-attack-type"></span></p>
+                            <p><strong>Risk Factor:</strong> <span id="modal-risk-factor"></span></p>
+                            <div
+                                style="background: #ffffff; padding: 15px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 10px;">
+                                <h6 style="color: #007bff;">Key Points:</h6>
+                                <ul id="modal-key-points"></ul>
+                            </div>
+                            <div
+                                style="background: #ffffff; padding: 15px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-top: 10px;">
+                                <h6 style="color: #ffc107;">Mitigations:</h6>
+                                <ul id="modal-mitigations"></ul>
+                            </div>
+                        </div>
+
+                        <!-- Left Column -->
+                        <div class="col-md-6">
+                            <div
+                                style="background: #ffffff; padding: 15px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 10px;">
+                                <h6 style="color: #28a745;">Tactics:</h6>
+                                <ul id="modal-tactics"></ul>
+                            </div>
+                            <div
+                                style="background: #ffffff; padding: 15px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                                <h6 style="color: #17a2b8;">Techniques:</h6>
+                                <ul id="modal-techniques"></ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-dark py-4">
+        <div class="container">
+          <div class="row">
+            <div class="col-md-6">
+              <h5>Contact Us</h5>
+              <p>Email: security@threatanalyzer.ai</p>
+            </div>
+            <div class="col-md-6 text-md-end text-center">
+              <p>&copy; 2023 ThreatAnalyzer AI<br />All rights reserved.</p>
+            </div>
+          </div>
+        </div>
+      </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- JavaScript to Apply Search -->
+    <script>
+        document.getElementById("searchButton").addEventListener("click", function() {
+            let searchQuery = document.getElementById("searchInput").value;
+            let url = new URL(window.location.href);
+        
+            url.searchParams.set("search", searchQuery); // Add search query to URL
+            window.location.href = url.toString();
+        });
+        
+        // Pressing "Enter" in search input triggers search
+        document.getElementById("searchInput").addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                document.getElementById("searchButton").click();
+            }
+        });
+        </script>
+
+<!-- JavaScript to Apply Filters -->
+<script>
+    document.getElementById("applyFilters").addEventListener("click", function() {
+        let tactic = document.getElementById("tacticFilter").value;
+        let technique = document.getElementById("techniqueFilter").value;
+        let risk = document.getElementById("risk_factor").value;
+        let sort = document.getElementById("sortOrder").value; // Updated to correct sorting ID
+        let year = document.getElementById("yearFilter").value; // Get selected year
+
+        let url = new URL(window.location.href);
+
+        // Only add parameters if they have values
+        if (tactic) url.searchParams.set("tactic", tactic);
+        if (technique) url.searchParams.set("technique", technique);
+        if (risk) url.searchParams.set("risk", risk);
+        if (sort) url.searchParams.set("sort", sort);
+        if (year) url.searchParams.set("year", year); 
+
+        window.location.href = url.toString(); // Reload the page with updated filters
+    });
+
+    document.getElementById("resetFilters").addEventListener("click", function() {
+        window.location.href = window.location.pathname; // Reloads without filters
+    });
+
+    // Auto-apply sorting when dropdown changes
+    document.getElementById("sortOrder").addEventListener("change", function() {
+        document.getElementById("applyFilters").click(); // Trigger filter application on sort change
+    });
+</script>
+
+
+
+    <!-- Script for View Details -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const threatModal = document.getElementById("threatModal");
+            threatModal.addEventListener("show.bs.modal", function (event) {
+                const button = event.relatedTarget;
+
+                // Set basic details
+                document.getElementById("threatModalLabel").textContent = button.getAttribute("data-title");
+                document.getElementById("modal-date").textContent = button.getAttribute("data-date");
+                document.getElementById("modal-description").textContent = button.getAttribute("data-description");
+                document.getElementById("modal-attack-type").textContent = button.getAttribute("data-attack-type");
+                document.getElementById("modal-risk-factor").textContent = button.getAttribute("data-risk-factor");
+
+                // Function to populate lists
+                function populateList(elementId, data) {
+                    const list = document.getElementById(elementId);
+                    list.innerHTML = "";
+                    try {
+                        const items = JSON.parse(data);
+                        items.forEach(item => {
+                            if (typeof item === "object") {
+                                list.innerHTML += `<li>${item.name} (${item.id})</li>`;
+                            } else {
+                                list.innerHTML += `<li>${item}</li>`;
+                            }
+                        });
+                    } catch (error) {
+                        console.error("Error parsing JSON:", error);
+                    }
+                }
+
+                // Populate lists for Key Points, Tactics, Techniques, and Mitigations
+                populateList("modal-key-points", button.getAttribute("data-key-points"));
+                populateList("modal-tactics", button.getAttribute("data-tactics"));
+                populateList("modal-techniques", button.getAttribute("data-techniques"));
+                populateList("modal-mitigations", button.getAttribute("data-mitigations"));
+            });
+        });
+    </script>
+
+</body>
+
+</html>
+

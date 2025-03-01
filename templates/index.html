@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ThreatAnalyzer AI - Home</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+  <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <style>
+    .bg-custom {
+      background-color: blanchedalmond;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-lg">
+    <div class="container">
+      <a class="navbar-brand" href="{{ url_for('home') }}">
+        <i class="bi bi-shield-shaded"></i></i> ThreatAnalyzer AI
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+        aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <!-- All Navigation Elements Together to the Right -->
+        <ul class="navbar-nav ms-auto align-items-center">
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('about') }}">About</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('team') }}">Team</a>
+          </li>
+          {% if session.role == 'admin' %}
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('upload') }}">Upload</a>
+          </li>
+          {% endif %}
+          <!-- Authentication Group -->
+          <li class="nav-item">
+            {% if session.username %}
+            <div class="auth-group">
+              <span>{{ session.username }}</span>
+              <a class="logout-btn" href="{{ url_for('logout') }}">Logout</a>
+            </div>
+            {% else %}
+            <a class="log-in" href="{{ url_for('login') }}">Login</a>
+            {% endif %}
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="container text-center">
+      <h1 class="display-4 mb-4">AI-Powered Cyber Threat Analysis</h1>
+      <p class="lead mb-5" style="font-size: 1.7rem">
+        Automatically extract ATT&CK tactics and techniques from unstructured
+        threat reports.
+      </p>
+      <a href="{% if session.username %}{{ url_for('threats') }}{% else %}{{ url_for('login') }}{% endif %}"
+        class="btn btn-lg" style="
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+            color: #ffff;
+            font-size: 1.5rem;
+            border-radius: 45px;
+          ">
+        Explore Threats
+      </a>
+    </div>
+  </section>
+
+  <!-- Trend Chart Section -->
+  <section class="py-5">
+    <div class="container text-center">
+      <h2 class="mb-4 fw-bold">Trend of Cyber Attacks</h2>
+      <canvas id="trend-chart" width="800" height="400" style="display: block; margin: 0 auto"></canvas>
+    </div>
+  </section>
+
+  <!-- Live Status Section -->
+  <section class="py-5 text-dark text-center">
+    <div class="container">
+      <h1 class="mb-4 fw-bold">Live Threat Report Statistics</h1>
+      <div class="row g-4">
+        <div class="col-md-4">
+          <div class="card shadow-lg border-0 p-4 bg-primary text-white">
+            <i class="fas fa-file-alt fa-3x mb-3"></i>
+            <h5 class="fw-bold">Total Reports</h5>
+            <h3 id="report-count" class="display-5 fw-bold">Loading...</h3>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card shadow-lg border-0 p-4 bg-danger text-white">
+            <i class="fas fa-crosshairs fa-3x mb-3"></i>
+            <h5 class="fw-bold">Unique Tactics</h5>
+            <h3 id="tactics-count" class="display-5 fw-bold">Loading...</h3>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card shadow-lg border-0 p-4 bg-success text-white">
+            <i class="fas fa-user-secret fa-3x mb-3"></i>
+            <h5 class="fw-bold">Unique Techniques</h5>
+            <h3 id="techniques-count" class="display-5 fw-bold">
+              Loading...
+            </h3>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features & How It Works Section -->
+  <section class="py-5 details-section">
+    <div class="container text-center">
+      <h1 class="mb-4 fw-bold">How It Works</h1>
+      <p class="lead mb-5" style="font-size: 1.5rem">
+        ThreatAnalyzer AI uses advanced machine learning algorithms to process
+        unstructured threat reports, extracting valuable cyber threat
+        intelligence. Here's how it works,
+      </p>
+      <div class="row g-4">
+        <div class="col-md-4">
+          <div class="card h-100 p-4 shadow-sm bg-white">
+            <i class="fas fa-upload feature-icon text-primary fa-3x mb-3"></i>
+            <h3>Upload Report</h3>
+            <p>
+              Upload your unstructured threat report (PDF format) to begin the
+              analysis.
+            </p>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card h-100 p-4 shadow-sm bg-white">
+            <i class="fas fa-cogs feature-icon text-warning fa-3x mb-3"></i>
+            <h3>AI Analysis</h3>
+            <p>
+              Our AI models analyze the report, identifying key tactics and
+              techniques using the ATT&CK framework.
+            </p>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card h-100 p-4 shadow-sm bg-white">
+            <i class="fas fa-database feature-icon text-success fa-3x mb-3"></i>
+            <h3>View Results</h3>
+            <p>
+              Access and modify the extracted cyber threat intelligence in an
+              editable format.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Adding some space between rows -->
+      <div class="mb-5"></div>
+      <!-- Added margin bottom for spacing -->
+    </div>
+    <!-- </section> -->
+
+    <!-- <section class="py-5 bg-custom"> -->
+    <!-- Existing Features Section (with minor updates) -->
+    <div class="container text-center">
+      <h1 class="mb-4 fw-bold">Features</h1>
+      <p class="lead mb-5" style="font-size: 1.5rem">
+        Discover the powerful capabilities of ThreatAnalyzer AI that
+        streamline cyber threat analysis, providing real-time insights and
+        top-tier security to protect your enterprise.
+      </p>
+      <div class="row g-4 mt-5">
+        <div class="col-md-4">
+          <div class="card h-100 p-4 shadow-sm bg-white">
+            <i class="fas fa-brain feature-icon text-primary fa-3x mb-3"></i>
+            <h3>Advanced AI Models</h3>
+            <p>
+              State-of-the-art language models trained on cybersecurity
+              datasets.
+            </p>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card h-100 p-4 shadow-sm bg-white">
+            <i class="fas fa-bolt feature-icon text-warning fa-3x mb-3"></i>
+            <h3>Real-time Analysis</h3>
+            <p>Process and analyze threat reports in seconds.</p>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card h-100 p-4 shadow-sm bg-white">
+            <i class="fas fa-shield feature-icon text-success fa-3x mb-3"></i>
+            <h3>Enterprise Security</h3>
+            <p>Military-grade encryption and data protection.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-dark py-4">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-6">
+          <h5>Contact Us</h5>
+          <p>Email: security@threatanalyzer.ai</p>
+        </div>
+        <div class="col-md-6 text-md-end text-center">
+          <p>&copy; 2023 ThreatAnalyzer AI<br />All rights reserved.</p>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Fetch & Update Document Count -->
+  <script>
+    function updateStatistics() {
+      fetch("/get_statistics")
+        .then((response) => response.json())
+        .then((data) => {
+          document.getElementById("report-count").innerText =
+            data.total_reports;
+          document.getElementById("tactics-count").innerText =
+            data.total_tactics;
+          document.getElementById("techniques-count").innerText =
+            data.total_techniques;
+        })
+        .catch((error) => console.error("Error fetching statistics:", error));
+    }
+
+    // Fetch statistics every 2 seconds
+    updateStatistics();
+    setInterval(updateStatistics, 20000);
+  </script>
+
+  <!-- Include Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Script to fetch data and render the chart -->
+  <script>
+    // Ensure the DOM is fully loaded
+    document.addEventListener("DOMContentLoaded", function () {
+      // Fetch the trend data from your Flask endpoint
+      fetch("/get_trend_data")
+        .then((response) => response.json())
+        .then((data) => {
+          // Get the canvas context
+          const ctx = document.getElementById("trend-chart").getContext("2d");
+
+          // Create a new Chart instance
+          new Chart(ctx, {
+            type: "line", // Specify the chart type
+            data: {
+              labels: data.months, // x-axis labels (e.g., "Jan 2025", "Feb 2025", etc.)
+              datasets: [
+                {
+                  label: "Number of Cyber Attacks",
+                  data: data.counts, // y-axis data points
+                  backgroundColor: "rgba(75, 192, 192, 0.2)", // Line fill color (optional)
+                  borderColor: "rgba(75, 192, 192, 1)", // Line color
+                  borderWidth: 5,
+                  fill: true, // Fills the area under the line
+                },
+              ],
+            },
+            options: {
+              responsive: false, // Using non-responsive mode so the canvas size is used
+              plugins: {
+                legend: {
+                  display: false, // This hides the legend (label) from the chart
+                },
+              },
+              scales: {
+                y: {
+                  display: false, // Hides the y-axis entirely
+                },
+                x: {
+                  display: false, // Hides the y-axis entirely
+                },
+              },
+            },
+          });
+        })
+        .catch((error) => {
+          console.error("Error fetching trend data:", error);
+        });
+    });
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ThreatAnalyzer AI - About</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+    <link
+      href="{{ url_for('static', filename='css/style.css') }}"
+      rel="stylesheet"
+    />
+    <style>
+      /* Custom Styles for About Page */
+      .about-section {
+        padding: 60px 0;
+        border-radius: 15px;
+      }
+      .about-section h2 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--dark-color);
+        margin-bottom: 30px;
+      }
+      .about-section h3 {
+        font-size: 1.8rem;
+        font-weight: 600;
+        color: var(--secondary-color);
+        margin-bottom: 20px;
+      }
+      .about-section p {
+        font-size: 1.1rem;
+        line-height: 1.8;
+        color: var(--primary-color);
+      }
+      .about-section ul {
+        list-style: none;
+        padding-left: 0;
+      }
+      .about-section ul li {
+        margin-bottom: 15px;
+        font-size: 1.1rem;
+        color: var(--primary-color);
+      }
+      .about-section ul li i {
+        color:var(--secondary-color);
+        margin-right: 10px;
+      }
+      .about-section img {
+        border-radius: 15px;
+        height: 120%;
+        width: 120%;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      }
+      .mission-section {
+        background: #ffffff;
+        padding: 40px;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        margin-top: 40px;
+      }
+      .mission-section h3 {
+        font-size: 1.8rem;
+        font-weight: 600;
+        color: var(--secondary-color);
+        margin-bottom: 20px;
+      }
+      .mission-section p {
+        font-size: 1.1rem;
+        line-height: 1.8;
+        color: var(--primary-color);
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="{{ url_for('home') }}">
+          <i class="fas fa-shield-alt"></i> ThreatAnalyzer AI
+        </a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+          aria-controls="navbarNav"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <!-- All Navigation Elements Together to the Right -->
+          <ul class="navbar-nav ms-auto align-items-center">
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('threats') }}">Threats</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('team') }}">Team</a>
+            </li>
+            {% if session.role == 'admin' %}
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('upload') }}">Upload</a>
+            </li>
+            {% endif %}
+            <!-- Authentication Group -->
+            <li class="nav-item">
+              {% if session.username %}
+              <div class="auth-group">
+                <span>{{ session.username }}</span>
+                <a class="logout-btn" href="{{ url_for('logout') }}">Logout</a>
+              </div>
+              {% else %}
+              <a class="log-in" href="{{ url_for('login') }}">Login</a>
+              {% endif %}
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <main class="py-5">
+      <div class="container">
+        <div class="about-section">
+          <h2 class="text-center mb-5">About ThreatAnalyzer AI</h2>
+          <div class="row g-5 align-items-center">
+            <div class="col-md-6 mb-4 mb-md-0">
+              <img
+                src="{{ url_for('static', filename='images/cti.jpg') }}"
+                alt="AI Analysis"
+                class="img-fluid rounded shadow-lg"
+              />
+            </div>
+            <div class="col-md-6">
+              <div class="ps-lg-5">
+                <h3>What We Do</h3>
+                <p>
+                  ThreatAnalyzer AI is an advanced cybersecurity solution that transforms unstructured Cyber Threat Intelligence (CTI) reports into a structured format for better analysis and decision-making.
+                </p>
+                <h3>How It Works</h3>
+                <ul>
+                  <li><i class="fas fa-check-circle"></i>Users provide raw, unstructured cyber threat reports.</li>
+                  <li><i class="fas fa-check-circle"></i>Our LLM-powered system processes the data, extracting key insights such as ATT&CK Tactics and Techniques.</li>
+                  <li><i class="fas fa-check-circle"></i>The structured data is stored in a secure database for future reference and analysis.</li>
+                  <li><i class="fas fa-check-circle"></i>The data can be remotely accessed from anywhere, ensuring flexibility and real-time threat monitoring.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="mission-section">
+            <h3>Why It Matters</h3>
+            <p>
+              Helps cybersecurity analysts save time by automating the extraction of key threat information. Enables quick decision-making with structured and easily retrievable data. Supports remote access, making it ideal for distributed security teams.
+            </p>
+            <h3>Our Mission</h3>
+            <p>
+              To simplify cyber threat intelligence by leveraging AI and automation. To provide real-time, structured insights that enhance cyber defense strategies.
+            </p>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-light py-4 mt-5">
+      <div class="container">
+        <div class="row">
+          <div class="col-md-6">
+            <h5>Contact Us</h5>
+            <p>Email: security@threatanalyzer.ai</p>
+          
+          </div>
+          <div class="col-md-6 text-end">
+            <p>
+              &copy; 2023 ThreatAnalyzer AI<br />
+              All rights reserved
+            </p>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>
